@@ -1,10 +1,14 @@
+-- TODO
+-- files from command line
+-- strip in clearString
+
 module Main where
 
 import Data.List (sort, sortBy, group)
 import Data.Char (toLower)
-import Data.Map (toAscList, fromListWith)
+import Data.Map (assocs, fromListWith, foldrWithKey)
 
-data Token = Token { word :: String, count :: Int }
+data Token = Token { word :: String, count :: Int } deriving Show
 
 lineWidth = 80
 invalidChars = ",:;.!?"
@@ -20,9 +24,10 @@ countTokensSort s = map
 
 -- Using Data.Map
 countTokensMap :: String -> [Token]
-countTokensMap s = map 
-	(uncurry Token)
-	(toAscList (fromListWith (+) (zip (map clearString (words s)) (repeat 1))))
+countTokensMap s = foldrWithKey
+	(\w n acc -> (Token w n):acc)
+	[]
+	(fromListWith (+) (zip (map clearString (words s)) (repeat 1)))
 
 countTokens = countTokensMap
 
