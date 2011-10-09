@@ -6,7 +6,7 @@ import Data.Map (toAscList, fromListWith)
 
 data Token = Token { word :: String, count :: Int }
 
-lineWidth = 80 :: Int
+lineWidth = 80
 invalidChars = ",:;.!?"
 
 clearString :: String -> String
