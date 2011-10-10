@@ -23,16 +23,14 @@ clearString s = map toLower $ filter (`notElem` invalidChars) s
 
 -- Given a (long) string, count the frequency of each word (using sort).
 countTokensSort :: String -> [Token]
-countTokensSort s = map 
-	(\x -> Token (head x) (length x)) 
-	(group . sort $ map clearString $ words s)
+countTokensSort s = map tokenFromGroup (group . sort $ map clearString $ words s)
+	where tokenFromGroup g = Token (head g) (length g)
 
 -- Given a (long) string, count the frequency of each word (using Data.Map).
 countTokensMap :: String -> [Token]
-countTokensMap s = foldrWithKey
-	(\w n acc -> (Token w n):acc)
-	[]
+countTokensMap s = foldrWithKey accumulateToken []
 	(fromListWith (+) (zip (map clearString (words s)) (repeat 1)))
+	where accumulateToken w n acc = (Token w n):acc
 
 -- Choose which implementation to use.
 countTokens = countTokensMap
@@ -41,23 +39,24 @@ countTokens = countTokensMap
 -- The length of the line will not exceed "lineWidth".
 printToken :: Int -> Int -> Token -> IO ()
 printToken maxLength maxCount (Token w c) = 
-	let lenWord = length w;
-		numSpaces = maxLength - lenWord + 1;
-		numHashes = div (lineWidth * c) maxCount - numSpaces - lenWord
-	in if numHashes <= 0 then
+	if numHashes <= 0 then
 		return ()
 	else
 		putStrLn $
 		w ++ 
 		(concat $ (replicate numSpaces " ") ++ (replicate numHashes "#"))
+	where lenWord = length w;
+		  numSpaces = maxLength - lenWord + 1;
+		  numHashes = div (lineWidth * c) maxCount - numSpaces - lenWord
 
 -- Print the histogram of a list of Tokens
 printTokens :: [Token] -> IO ()
 printTokens tokens =
-	let maxLength = maximum $ map (length . word) tokens
-	    maxCount = maximum $ map count tokens
-	    sortedTokens = sortBy (\t1 t2 -> compare (count t2) (count t1)) tokens
-	in mapM_ (printToken maxLength maxCount) sortedTokens
+	mapM_ (printToken maxLength maxCount) sortedTokens
+	where maxLength = maximum $ map (length . word) tokens
+	      maxCount = maximum $ map count tokens
+	      cmpTokens t1 t2 = compare (count t2) (count t1)
+	      sortedTokens = sortBy cmpTokens tokens
 
 main = do
 	words <- getContents
