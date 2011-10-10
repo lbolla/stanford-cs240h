@@ -6,7 +6,8 @@ module Main where
 
 import Data.List (sort, sortBy, group)
 import Data.Char (toLower)
-import Data.Map (assocs, fromListWith, foldrWithKey)
+import Data.Map (Map, empty, foldrWithKey, insertWith')
+import Data.Foldable (foldl')
 
 -- Stores a word and its frequency in the text.
 data Token = Token { word :: String, count :: Int } deriving Show
@@ -29,8 +30,13 @@ countTokensSort s = map tokenFromGroup (group . sort $ map clearString $ words s
 -- Given a (long) string, count the frequency of each word (using Data.Map).
 countTokensMap :: String -> [Token]
 countTokensMap s = foldrWithKey accumulateToken []
-	(fromListWith (+) (zip (map clearString (words s)) (repeat 1)))
+	(mapFromList (map clearString (words s)))
 	where accumulateToken w n acc = (Token w n):acc
+
+-- Create a map from a list of words
+mapFromList :: [String] -> Map String Int
+mapFromList words = foldl' ins empty words
+	where ins m w = insertWith' (+) w 1 m
 
 -- Choose which implementation to use.
 countTokens = countTokensMap
