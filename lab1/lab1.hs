@@ -53,7 +53,7 @@ printToken maxLength maxCount (Token w c) =
 		(concat $ (replicate numSpaces " ") ++ (replicate numHashes "#"))
 	where lenWord = length w;
 		  numSpaces = maxLength - lenWord + 1;
-		  numHashes = div (lineWidth * c) maxCount - numSpaces - lenWord
+		  numHashes = div ((lineWidth - numSpaces - lenWord) * c) maxCount
 
 -- Print the histogram of a list of Tokens
 printTokens :: [Token] -> IO ()
