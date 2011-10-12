@@ -43,22 +43,17 @@ countTokens = countTokensMap
 
 -- Print a Token as a word and a list of '#' representing its frequency.
 -- The length of the line will not exceed "lineWidth".
-printToken :: Int -> Int -> Token -> IO ()
-printToken maxLength maxCount (Token w c) = 
-	if numHashes <= 0 then
-		return ()
-	else
-		putStrLn $
-		w ++ 
-		(concat $ (replicate numSpaces " ") ++ (replicate numHashes "#"))
-	where lenWord = length w;
-		  numSpaces = maxLength - lenWord + 1;
-		  numHashes = div ((lineWidth - numSpaces - lenWord) * c) maxCount
+tokenToString :: Int -> Int -> Token -> String
+tokenToString maxLength maxCount (Token w c) = 
+	w ++ (concat $ (replicate numSpaces " ") ++ (replicate numHashes "#"))
+	where lenWord = length w
+	      numSpaces = maxLength - lenWord + 1
+	      numHashes = div ((lineWidth - numSpaces - lenWord) * c) maxCount
 
 -- Print the histogram of a list of Tokens
-printTokens :: [Token] -> IO ()
-printTokens tokens =
-	mapM_ (printToken maxLength maxCount) sortedTokens
+tokensToString:: [Token] -> String
+tokensToString tokens =
+	unlines (map (tokenToString maxLength maxCount) sortedTokens)
 	where maxLength = maximum $ map (length . word) tokens
 	      maxCount = maximum $ map count tokens
 	      cmpTokens t1 t2 = compare (count t2) (count t1)
@@ -66,4 +61,4 @@ printTokens tokens =
 
 main = do
 	words <- getContents
-	printTokens $ countTokens words
+	putStrLn $ tokensToString $ countTokens words
