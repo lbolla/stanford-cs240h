@@ -1,6 +1,7 @@
 module Main where
 
 import Data.Bits
+import Data.List (partition)
 import Hilbert
 
 data Point = Point { xCoord :: Int, yCoord :: Int } deriving (Eq, Show)
@@ -35,21 +36,89 @@ data RTree = EmptyRTree
 	     | Leaf { leafCapacity :: Int, items :: [LeafItem] }
 	     deriving Show
 
-mkLeafItem :: Rectangle -> LeafItem
-mkLeafItem r = LeafItem r (distance r)
+isLeafFull :: RTree -> Bool
+isLeafFull (Leaf c is) = c <= length is
+isLeafFull _ = error "called isLeafFull on non-leaf"
 
-mkLeaf :: Int -> [Rectangle] -> RTree
-mkLeaf c rects = Leaf c $ map mkLeafItem rects
+mkLeafItem :: Rectangle -> LeafItem
+mkLeafItem r = LeafItem r $ distance r
+
+singleton :: RTree
+singleton = EmptyRTree
+
+insertRectInLeaf :: Rectangle -> RTree -> RTree
+insertRectInLeaf r (Leaf c is) = Leaf c $ iinf ++ [newLeaf] ++ isup
+	where newLeaf = mkLeafItem r
+	      (iinf, isup) = partition (\x -> (hv x) < (hv newLeaf)) is
+
+insert :: Rectangle -> RTree -> RTree
+insert r EmptyRTree = Leaf 10 $ [mkLeafItem r] -- TODO leaf capacity param of RTree
+insert r l@(Leaf c is)
+	| not (isLeafFull l) = insertRectInLeaf r l
+	| otherwise = error "TODO overflow"
+insert r (Node br h c cs) = error "TODO insert node"
+
+chooseLeaf :: RTree -> Rectangle -> RTree
+chooseLeaf l@(Leaf _ _) _ = l
+chooseLeaf t r = error "TODO"
+
+search :: RTree -> Rectangle -> [Rectangle]
+search EmptyRTree _ = []
+search (Leaf c is) r = filter (intersect r) (map rect is)
+search (Node br _ _ cs) r
+	| intersect r br = foldr (++) [] $ map (\t -> search t r) cs
+	| otherwise = []
+
+intersect :: Rectangle -> Rectangle -> Bool
+intersect r1 r2 = not ( 
+		   r2_left > r1_right
+		|| r2_right < r1_left
+		|| r2_top < r1_bottom
+		|| r2_bottom > r1_top
+		)
+	where r2_left   = xCoord $ p1 r2
+	      r1_right  = xCoord $ p2 r1
+	      r2_right  = xCoord $ p2 r2
+	      r1_left   = xCoord $ p1 r1
+	      r2_top    = yCoord $ p2 r2
+	      r1_bottom = yCoord $ p1 r1
+	      r2_bottom = yCoord $ p1 r2
+	      r1_top    = yCoord $ p2 r1
 
 main = do
+	let r0 = Rectangle (Point 100 100) (Point 110 110)
 	let r1 = Rectangle (Point 0 0) (Point 10 10)
 	let r2 = Rectangle (Point 0 0) (Point 8 12)
-	putStrLn $ show $ center r1
-	putStrLn $ show $ distance r1
-	putStrLn $ show $ r1 == r2
-	putStrLn $ show $ r1 > r2
-	putStrLn $ show $ minimumBoundingRect [r1, r2]
-	let l1 = mkLeafItem r1
-	putStrLn $ show l1
-	let t1 = mkLeaf 10 [r1, r2]
-	putStrLn $ show t1
+	let r3 = Rectangle (Point 0 0) (Point 1 2)
+	--  putStrLn $ show $ center r1
+	--  putStrLn $ show $ distance r1
+	--  putStrLn $ show $ r1 == r2
+	--  putStrLn $ show $ r1 > r2
+	--  putStrLn $ show $ minimumBoundingRect [r1, r2]
+	--  let l1 = mkLeafItem r1
+	--  putStrLn $ show l1
+	--  let t1 = mkLeaf 10 [r1, r2]
+	--  putStrLn $ show t1
+	--  let t1 = insert r1 singleton
+	--  putStrLn $ show $ t1
+	--  let t2 = insert r2 t1
+	--  putStrLn $ show $ t2
+	--  let t3 = insert r3 t2
+	--  putStrLn $ show $ t3
+	--  let t0 = Node r1 (distance r1) 10 [Leaf 10 [mkLeafItem r1]]
+
+	let l1 = Leaf 10 [
+			mkLeafItem r1,
+			mkLeafItem r2
+		]
+	let l2 = Leaf 10 [
+			mkLeafItem r1,
+			mkLeafItem r3
+		]
+	let t0 = Node r1 (distance r1) 10 [l1, l2]
+	putStrLn $ show $ t0
+	
+	putStrLn $ show $ search EmptyRTree r1
+	putStrLn $ show $ search l1 r1
+	putStrLn $ show $ search t0 r1
+	putStrLn $ show $ search t0 r0
